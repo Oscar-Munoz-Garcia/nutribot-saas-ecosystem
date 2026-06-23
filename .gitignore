@@ -1,0 +1,59 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ── Entornos virtuales ────────────────────────────────────────────────────────
+venv/
+env/
+.venv/
+.env/
+
+# ── Variables de entorno (NUNCA subir credenciales) ───────────────────────────
+.env
+.env.local
+.env.production
+secrets.py
+
+# ── Base de datos local (datos de pacientes — privacidad) ─────────────────────
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# ── Fotos de comida de los pacientes (datos personales) ──────────────────────
+fotos_comida/*
+!fotos_comida/.gitkeep
+
+# ── Power BI ──────────────────────────────────────────────────────────────────
+# Los archivos .pbix sí se pueden subir al repo si los quieres compartir.
+# Descomenta la línea siguiente si prefieres excluirlos:
+# dashboard/*.pbix
+
+# ── IDEs y editores ───────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ── Windows ───────────────────────────────────────────────────────────────────
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
