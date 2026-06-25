@@ -247,3 +247,14 @@ def obtener_ultimos_registros(id_telegram: int, dias: int = 7) -> list:
             """,
             (id_telegram, dias)
         ).fetchall()
+
+
+def registrar_entrenamiento_hoy(id_telegram: int, entrena: int) -> None:
+    """Registra si el usuario entrenó hoy."""
+    hoy = _hoy()
+    obtener_o_crear_registro_hoy(id_telegram)
+    with _get_conn() as conn:
+        conn.execute(
+            "UPDATE registros_diarios SET entrena_hoy = ? WHERE id_telegram = ? AND fecha = ?",
+            (entrena, id_telegram, hoy)
+        )

@@ -118,7 +118,27 @@ def _kb_tipo_comida() -> types.InlineKeyboardMarkup:
         types.InlineKeyboardButton("🍎 Snack",     callback_data="quecomo_snack"),
     )
     return kb
+def _kb_tipo_entreno() -> types.InlineKeyboardMarkup:
+    kb = types.InlineKeyboardMarkup()
+    kb.row(
+        types.InlineKeyboardButton("💪 Fuerza",    callback_data="entreno_fuerza"),
+        types.InlineKeyboardButton("🏃 Cardio",    callback_data="entreno_cardio"),
+    )
+    kb.row(
+        types.InlineKeyboardButton("🧘 Movilidad", callback_data="entreno_movilidad"),
+        types.InlineKeyboardButton("🏊 Otro",      callback_data="entreno_otro"),
+    )
+    return kb
 
+def _kb_duracion_entreno() -> types.InlineKeyboardMarkup:
+    kb = types.InlineKeyboardMarkup()
+    kb.row(
+        types.InlineKeyboardButton("30 min", callback_data="duracion_30"),
+        types.InlineKeyboardButton("45 min", callback_data="duracion_45"),
+        types.InlineKeyboardButton("60 min", callback_data="duracion_60"),
+        types.InlineKeyboardButton("90 min", callback_data="duracion_90"),
+    )
+    return kb
 
 # ──────────────────────────────────────────────────────────────────────────────
 # MÁQUINA DE ESTADOS — ONBOARDING
@@ -228,6 +248,30 @@ def callback_handler(call: types.CallbackQuery) -> None:
             text=f"✅ Objetivo guardado: *{objetivo}*", parse_mode="Markdown"
         )
         _enviar_pregunta_onboarding(chat_id, 2)
+    
+    elif data.startswith("entreno_"):
+        tipo = data.replace("entreno_", "")
+        etiquetas = {
+            "fuerza": "💪 Fuerza", "cardio": "🏃 Cardio",
+            "movilidad": "🧘 Movilidad", "otro": "🏊 Otro"
+        }
+        bot.edit_message_text(
+            chat_id=chat_id, message_id=msg_id,
+            text=f"Tipo: *{etiquetas[tipo]}*\n\n¿Cuánto tiempo entrenaste?",
+            reply_markup=_kb_duracion_entreno(),
+            parse_mode="Markdown"
+        )
+
+    elif data.startswith("duracion_"):
+        minutos = data.replace("duracion_", "")
+        db.registrar_entrenamiento_hoy(chat_id, 1)
+        bot.edit_message_text(
+            chat_id=chat_id, message_id=msg_id,
+            text=f"✅ *Entrenamiento registrado*\n\n"
+                 f"⏱️ Duración: {minutos} minutos\n\n"
+                 f"_¡Buen trabajo! Sigue así._",
+            parse_mode="Markdown"
+        )
 
     elif data.startswith("act_"):
         actividad = data.replace("act_", "")
@@ -337,7 +381,7 @@ def callback_handler(call: types.CallbackQuery) -> None:
 # HANDLER: TEXTO — PESO DIARIO E INTOLERANCIAS
 # ──────────────────────────────────────────────────────────────────────────────
 
-@bot.message_handler(content_types=["text"])
+@bot.message_handler(func=lambda m: not m.text.startswith('/'), content_types=["text"])
 def handler_texto(message: types.Message) -> None:
     chat_id = message.chat.id
     texto   = message.text.strip()
@@ -585,6 +629,22 @@ def cmd_dieta(message: types.Message) -> None:
         },
     }
 
+@bot.message_handler(commands=["entrene"])
+def cmd_entrene(message: types.Message) -> None:
+    chat_id = message.chat.id
+    usuario = db.obtener_usuario(chat_id)
+
+    if usuario is None or usuario["paso_onboarding"] < TOTAL_ONBOARDING_STEPS:
+        bot.reply_to(message, "Primero completa tu registro con /start 🙂")
+        return
+
+    db.obtener_o_crear_registro_hoy(chat_id)
+    bot.reply_to(
+        message,
+        "💪 *¿Qué tipo de entrenamiento hiciste hoy?*",
+        reply_markup=_kb_tipo_entreno(),
+        parse_mode="Markdown"
+    )
     # Buscar menú más cercano al perfil o usar el omnívoro mantenimiento como fallback
     menu = (
         menus.get((dieta, objetivo))
