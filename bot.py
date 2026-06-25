@@ -629,23 +629,7 @@ def cmd_dieta(message: types.Message) -> None:
         },
     }
 
-@bot.message_handler(commands=["entrene"])
-def cmd_entrene(message: types.Message) -> None:
-    chat_id = message.chat.id
-    usuario = db.obtener_usuario(chat_id)
-
-    if usuario is None or usuario["paso_onboarding"] < TOTAL_ONBOARDING_STEPS:
-        bot.reply_to(message, "Primero completa tu registro con /start 🙂")
-        return
-
-    db.obtener_o_crear_registro_hoy(chat_id)
-    bot.reply_to(
-        message,
-        "💪 *¿Qué tipo de entrenamiento hiciste hoy?*",
-        reply_markup=_kb_tipo_entreno(),
-        parse_mode="Markdown"
-    )
-    # Buscar menú más cercano al perfil o usar el omnívoro mantenimiento como fallback
+    # Buscar menú más cercano al perfil o usar el omnívoro perder grasa como fallback
     menu = (
         menus.get((dieta, objetivo))
         or menus.get(("omnivoro", "perder grasa"))
@@ -665,13 +649,31 @@ def cmd_entrene(message: types.Message) -> None:
 
     for momento, descripcion in menu.items():
         if comidas < 4 and momento == "merienda":
-            continue   # Omitir merienda si el usuario hace menos de 4 comidas
+            continue
         label = iconos_momento.get(momento, momento.capitalize())
         respuesta += f"*{label}*\n{descripcion}\n\n"
 
     respuesta += "_💡 Ajusta porciones con tu nutricionista según tu progreso._"
 
     bot.reply_to(message, respuesta, parse_mode="Markdown")
+
+
+@bot.message_handler(commands=["entrene"])
+def cmd_entrene(message: types.Message) -> None:
+    chat_id = message.chat.id
+    usuario = db.obtener_usuario(chat_id)
+
+    if usuario is None or usuario["paso_onboarding"] < TOTAL_ONBOARDING_STEPS:
+        bot.reply_to(message, "Primero completa tu registro con /start 🙂")
+        return
+
+    db.obtener_o_crear_registro_hoy(chat_id)
+    bot.reply_to(
+        message,
+        "💪 *¿Qué tipo de entrenamiento hiciste hoy?*",
+        reply_markup=_kb_tipo_entreno(),
+        parse_mode="Markdown"
+    )
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -682,6 +684,16 @@ if __name__ == "__main__":
     # Inicializar la base de datos
     db.init_db()
     logger.info("Base de datos inicializada.")
+
+    # Registrar comandos en Telegram (aparecen en el menú del bot)
+    bot.set_my_commands([
+        types.BotCommand("start",    "Registrarse o ver perfil"),
+        types.BotCommand("quecomo",  "Sugerencia de receta personalizada"),
+        types.BotCommand("progreso", "Tu evolución de la última semana"),
+        types.BotCommand("dieta",    "Ver tu menú según tu perfil"),
+        types.BotCommand("entrene",  "Registrar entrenamiento de hoy"),
+    ])
+    logger.info("Comandos registrados en Telegram.")
 
     # Arrancar el scheduler en segundo plano
     scheduler = sched.iniciar_scheduler(bot)
